@@ -1,3 +1,7 @@
+#############################################################################################################
+#                                   CLASE BACKTESTING   
+#############################################################################################################
+
 class Backtesting:
 
     def __init__(self):
@@ -115,7 +119,65 @@ class Backtesting:
         
         return historico_trades
         
-       
+#############################################################################################################
+#                                        FUNCIONES INDEPENDIENTES   
+#############################################################################################################
+    
+def getData(N,moneda,periodo):
+    #◙(100, "EURUSD", "4h")
+    import requests
+    import json
+    import time
+    import numpy as np
+    valor = 864 #DEPENDE DEL PERIODO
+    contador = 0
+    respuesta = requests.get("https://api2.binance.com/api/v3/klines?symbol="+moneda+"&interval="+periodo+"&limit=1").text
+    respuesta = json.loads(respuesta)
+    try: 
+        fecha = respuesta[0][0]
+    except:
+        print(respuesta)
+    data = []
+    while contador < N:
+        time.sleep(1)
+        if contador == 0:
+            response = requests.get("https://api2.binance.com/api/v3/klines?symbol="+moneda+"&interval="+periodo+"&limit=1&endTime="+str(int(fecha-valor))).text
+            response = np.array(json.loads(response)).astype(float)
+            try: 
+                fecha = response[0][0]
+            except:
+                print(contador)
+                print(N)
+                print(response)
+            contador += 1
+            data = response
+        if contador + 1000 < N:
+            response = requests.get("https://api2.binance.com/api/v3/klines?symbol="+moneda+"&interval="+periodo+"&limit=1000&endTime="+str(int(fecha-valor))).text
+            response = np.array(json.loads(response)).astype(float)
+            try: 
+                fecha = response[0][0]
+            except:
+                print("https://api2.binance.com/api/v3/klines?symbol="+moneda+"&interval="+periodo+"&limit=1000&endTime="+str(int(fecha-valor)))
+                print(contador)
+                print(N)
+                print(response)
+            contador += 1000
+            data = np.concatenate((response,data))
+        else:
+            response = requests.get("https://api2.binance.com/api/v3/klines?symbol="+moneda+"&interval="+periodo+"&limit="+str(int(N-contador))+"&endTime="+str(int(fecha-valor))).text
+            response = np.array(json.loads(response)).astype(float)
+            try: 
+                fecha = response[0][0]
+            except:
+                print(contador)
+                print(N)
+                print(response)
+            contador += 1000
+            data = np.concatenate((response,data))
+    #OPEN/HIGH/LOW/CLOSE/VOLUME/RSITipo/RSIPendiente/Media1Pendiente/Media2Pendiente/Media3Pendiente/Target
+            data = data[:,1:6]
+            data = data.np.rename(columns={"1":"Open","2":"High","3":"Low","4":"Close","5":"Volume"})
+    return data   
         
        
         
