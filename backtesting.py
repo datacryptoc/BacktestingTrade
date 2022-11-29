@@ -124,11 +124,12 @@ class Backtesting:
 #############################################################################################################
     
 def getData(N,moneda,periodo):
-    #◙(100, "EURUSD", "4h")
+    #(100, "EURUSD", "4h")
     import requests
     import json
     import time
     import numpy as np
+    import pandas as pd
     valor = 864 #DEPENDE DEL PERIODO
     contador = 0
     respuesta = requests.get("https://api2.binance.com/api/v3/klines?symbol="+moneda+"&interval="+periodo+"&limit=1").text
@@ -173,10 +174,11 @@ def getData(N,moneda,periodo):
                 print(N)
                 print(response)
             contador += 1000
-            data = np.concatenate((response,data))
+            data = np.concatenate((response,data[:,1:6]))
     #OPEN/HIGH/LOW/CLOSE/VOLUME/RSITipo/RSIPendiente/Media1Pendiente/Media2Pendiente/Media3Pendiente/Target
-            data = data[:,1:6]
-            data = data.np.rename(columns={"1":"Open","2":"High","3":"Low","4":"Close","5":"Volume"})
+            data = pd.DataFrame(data)
+            data.columns = ["Open", "High", "Low", "Close", "Volume"]
+            data = data.round(2)
     return data   
         
        
