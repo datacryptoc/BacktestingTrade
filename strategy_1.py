@@ -14,7 +14,7 @@ import backtesting as bt
 import requests
 
 
-data = bt.getData(2000,"BTCUSDT","1d")
+df = bt.getData(2000,"BTCUSDT","1d")
 '''
 df = pd.read_csv("eurusd_corregido.csv", sep=";")
 columns = ["date", "hour", "open", "high", "low", "close", "volume"]
@@ -23,13 +23,13 @@ df = df[490000:]
 df["newdate"] = df["date"] + " "+ df["hour"]
 df["newdate"] = pd.to_datetime(df["newdate"])
 df = df.set_index("newdate")
-
+'''
 
 
 #Insertar stochastico
-high = df["high"]
-low = df["low"]
-close = df["close"]
+high = df["High"]
+low = df["Low"]
+close = df["Close"]
 
 #AMPLITUD VELAS
 df["amplitud"] = 0
@@ -52,33 +52,34 @@ for i in range(0, len(df)):
     df["stoch1"].iloc[i] = stoch1.iloc[i]
     df["stoch2"].iloc[i] = stoch2.iloc[i]
     df["media50"].iloc[i] = ema[i]
-    df["amplitud"].iloc[i] = df["close"].iloc[i] - df["open"].iloc[i]
+    df["amplitud"].iloc[i] = df["Close"].iloc[i] - df["Open"].iloc[i]
     if df["amplitud"].iloc[i] >= 0:
         df["amplitud_"].iloc[i] = 1
-    else: pass
+    else: df["amplitud_"].iloc[i] = -1
   
-
+#Inicializo backtesting 
 a = bt.Backtesting  
+a.fondo_inicial = 1000
+cantidad = 40
+
 compra = 0
 venta = 0
 for i in range(0, len(df)):
     stoch = df["stoch1"].iloc[i]
     media = df["media50"].iloc[i]
-    close = df["close"].iloc[i]
+    close = df["Close"].iloc[i]
     
     #---COMPRAS
     if stoch <= 20 and compra == 0:
         if close > media:            
             for e in range(i,i+10):
-                if df["close"].iloc[e] > df["media50"].iloc[e]:
+                if df["Close"].iloc[e] > df["media50"].iloc[e]:
                     
-                    if df["amplitud_"].iloc[e] == 0 and compra == 0:
-                        print("espero")
-                        print(compra)
+                    if df["amplitud_"].iloc[e] == -1 and compra == 0:
+                        pass
                     if df["amplitud_"].iloc[e] == 1 and compra == 0:
-                        print("compro")
-                        print(df.index[e])
                         compra = 1
+                        a.buy(close,cantidad)
                     if compra == 1:
                         break
                     else: pass
@@ -86,15 +87,13 @@ for i in range(0, len(df)):
     if stoch >= 80 and compra == 0:      
         if close < media:
             for e in range(i,i+10):
-                if df["close"].iloc[e] < df["media50"].iloc[e]:
+                if df["Close"].iloc[e] < df["media50"].iloc[e]:
                     
-                    if df["amplitud_"].iloc[e] == 0 and venta == 0:
-                        print("espero")
-                        print(venta)
+                    if df["amplitud_"].iloc[e] == -1 and venta == 0:
+                        pass
                     if df["amplitud_"].iloc[e] == 1 and venta == 0:
-                        print("vendo")
-                        print(df.index[e])
                         venta = 1
+                        a.sell(close,cantidad)
                     if venta == 1:
                         break
                     else: pass
@@ -106,4 +105,4 @@ for i in range(0, len(df)):
     #---CIERRE VENTA
     if venta == 1:
         pass
-'''        
+    
