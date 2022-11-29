@@ -174,9 +174,9 @@ def getData(N,moneda,periodo):
                 print(N)
                 print(response)
             contador += 1000
-            data = np.concatenate((response,data[:,1:6]))
+            data = np.concatenate((response,data))
     #OPEN/HIGH/LOW/CLOSE/VOLUME/RSITipo/RSIPendiente/Media1Pendiente/Media2Pendiente/Media3Pendiente/Target
-            data = pd.DataFrame(data)
+            data = pd.DataFrame(data[:,1:6])
             data.columns = ["Open", "High", "Low", "Close", "Volume"]
             data = data.round(2)
     return data   
