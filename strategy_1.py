@@ -10,43 +10,38 @@ import talib
 import matplotlib.pyplot as plt
 import seaborn as sns
 import mplfinance as mpf
-import backtesting as bt
+from backtesting import Backtesting, getData
 import requests
 
 
-df = bt.getData(2000,"BTCUSDT","1d")
-'''
-df = pd.read_csv("eurusd_corregido.csv", sep=";")
-columns = ["date", "hour", "open", "high", "low", "close", "volume"]
-df.columns = columns
-df = df[490000:]
-df["newdate"] = df["date"] + " "+ df["hour"]
-df["newdate"] = pd.to_datetime(df["newdate"])
-df = df.set_index("newdate")
-'''
+df = getData(25000,"EURUSDT","15m")
 
+#############################################################################################################
+#                                   PREPARACIÓN DE DATAFRAME   
+#############################################################################################################
 
-#Insertar stochastico
+#--- Nombres Globales
 high = df["High"]
 low = df["Low"]
 close = df["Close"]
 
-#AMPLITUD VELAS
+#--- Amplitud
 df["amplitud"] = 0
 df["amplitud_"] = 0 
 
 
-#ESTOCÁSTICO
+#--- Estocástico
 stoch = talib.STOCH(high, low, close, fastk_period=7, slowk_period=3, slowk_matype=0, slowd_period=3, slowd_matype=0)
 stoch1 = stoch[0]
 stoch2 = stoch[1]
 df["stoch1"] = 0
 df["stoch2"] = 0
 
-#MEDIA
+#--- Media Movil Exponencial
 ema = talib.EMA(close, timeperiod=50)
 df["media50"] = 0
 
+#--- Cálculos iterativos
 for i in range(0, len(df)):
     
     df["stoch1"].iloc[i] = stoch1.iloc[i]
@@ -57,52 +52,82 @@ for i in range(0, len(df)):
         df["amplitud_"].iloc[i] = 1
     else: df["amplitud_"].iloc[i] = -1
   
-#Inicializo backtesting 
-a = bt.Backtesting  
-a.fondo_inicial = 1000
-cantidad = 40
 
-compra = 0
-venta = 0
-for i in range(0, len(df)):
+#############################################################################################################
+#                                   BACKTESTING ESTRATEGIA
+#############################################################################################################
+
+#--- Inicialización 
+bt = Backtesting()
+bt.fondo_inicial = 1000
+cantidad = 0.2*(bt.fondos)
+
+i = 50
+while i<len(df):
+    #Inicializo variables de compra/venta
+    compra = bt.compra 
+    venta = bt.venta
+    date = i
+    
     stoch = df["stoch1"].iloc[i]
     media = df["media50"].iloc[i]
     close = df["Close"].iloc[i]
+    high = df["High"].iloc[i]
     
     #---COMPRAS
-    if stoch <= 20 and compra == 0:
+    if compra == 0 and venta == 0 and stoch <= 20: #ESTOCÁSTICO < 20
         if close > media:            
             for e in range(i,i+10):
                 if df["Close"].iloc[e] > df["media50"].iloc[e]:
                     
-                    if df["amplitud_"].iloc[e] == -1 and compra == 0:
+                    if df["amplitud_"].iloc[e] == -1 and compra == 0:          #Esperando para comprar
                         pass
-                    if df["amplitud_"].iloc[e] == 1 and compra == 0:
-                        compra = 1
-                        a.buy(close,cantidad)
-                    if compra == 1:
+                    elif df["amplitud_"].iloc[e] == 1 and compra == 0:           #Momento de comprar
+                        bt.buy(date ,close,cantidad)
+                        precio_compra = close
+                        i = e
+                        break
+                    elif compra == 1:                                            #Ya se ha comprado
                         break
                     else: pass
     #---VENTAS
-    if stoch >= 80 and compra == 0:      
+    if compra == 0 and venta == 0 and stoch >= 80:  #ESTOCÁSTICO > 80  
         if close < media:
             for e in range(i,i+10):
+                print(e)
                 if df["Close"].iloc[e] < df["media50"].iloc[e]:
                     
-                    if df["amplitud_"].iloc[e] == -1 and venta == 0:
+                    if df["amplitud_"].iloc[e] == -1 and venta == 0:           #Esperando para vender
                         pass
-                    if df["amplitud_"].iloc[e] == 1 and venta == 0:
-                        venta = 1
-                        a.sell(close,cantidad)
-                    if venta == 1:
+                    elif df["amplitud_"].iloc[e] == 1 and venta == 0:            #Momento de vender
+                        bt.sell(date, close,cantidad)
+                        precio_venta = close
+                        i = e
+                        break
+                    elif venta == 1:                                             #Ya se ha vendido
                         break
                     else: pass
-
+                
     #---CIERRE COMPRA
-    if compra == 1:
-        pass
+    if compra == 1 and close >= (precio_compra + 0.01):
+        bt.buy_close(i, close, 0.5)
+    if compra == 1 and close >= (precio_compra + 0.02):
+        bt.buy_close(i, close, 0.5)  
+    if compra == 1 and close >= (precio_compra + 0.03):
+        bt.buy_close(i, close)  
+    if compra == 1 and close <= (precio_compra - 0.0025):
+        bt.buy_close(i, close)
     
     #---CIERRE VENTA
-    if venta == 1:
-        pass
+    if venta == 1 and close <= (precio_venta - 0.01):
+        bt.sell_close(i, close, 0.5)
+    if venta == 1 and close <= (precio_venta - 0.02):
+        bt.sell_close(i, close, 0.5)
+    if venta == 1 and close <= (precio_venta - 0.03):
+        bt.sell_close(i, close)
+    if venta == 1 and close >= (precio_venta + 0.0025):
+        bt.sell_close(i, close)
     
+    i = i+1
+
+bt.plot_hist()    
