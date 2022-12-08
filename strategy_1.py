@@ -73,6 +73,7 @@ while i<len(df):
     media = df["media50"].iloc[i]
     close = df["Close"].iloc[i]
     high = df["High"].iloc[i]
+    low = df["Low"].iloc[i]
     
     #---COMPRAS
     if compra == 0 and venta == 0 and stoch <= 20: #ESTOCÁSTICO < 20
@@ -108,25 +109,25 @@ while i<len(df):
                         break
                     else: pass
                 
-    #---CIERRE COMPRA
-    if compra == 1 and close >= (precio_compra + 0.01):
-        bt.buy_close(i, close, 0.5)
-    if compra == 1 and close >= (precio_compra + 0.02):
-        bt.buy_close(i, close, 0.5)  
-    if compra == 1 and close >= (precio_compra + 0.03):
-        bt.buy_close(i, close)  
-    if compra == 1 and close <= (precio_compra - 0.0025):
-        bt.buy_close(i, close)
+    #---CIERRE COMPRA 
+    if compra == 1 and high >= (precio_compra + 0.01):
+        bt.buy_close(i, precio_compra + 0.01, 0.5)
+    elif compra == 2 and high >= (precio_compra + 0.02):
+        bt.buy_close(i, precio_compra + 0.02, 0.5)  
+    elif compra == 3 and high >= (precio_compra + 0.03):
+        bt.buy_close(i, precio_compra + 0.03)  
+    elif compra != 0 and low <= (precio_compra - 0.0025):
+        bt.buy_close(i, precio_compra - 0.01)
     
     #---CIERRE VENTA
-    if venta == 1 and close <= (precio_venta - 0.01):
-        bt.sell_close(i, close, 0.5)
-    if venta == 1 and close <= (precio_venta - 0.02):
-        bt.sell_close(i, close, 0.5)
-    if venta == 1 and close <= (precio_venta - 0.03):
-        bt.sell_close(i, close)
-    if venta == 1 and close >= (precio_venta + 0.0025):
-        bt.sell_close(i, close)
+    if venta == 1 and low <= (precio_venta - 0.01):
+        bt.sell_close(i, precio_venta - 0.01, 0.5)
+    elif venta == 2 and low <= (precio_venta - 0.02):
+        bt.sell_close(i, precio_venta - 0.02, 0.5)
+    elif venta == 3 and low <= (precio_venta - 0.03):
+        bt.sell_close(i, precio_venta - 0.03)
+    elif venta != 0 and high >= (precio_venta + 0.0025):
+        bt.sell_close(i, precio_venta + 0.01)
     
     i = i+1
 
