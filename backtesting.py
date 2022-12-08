@@ -89,6 +89,7 @@ class Backtesting:
             cantidad_apertura = self.dict_ordenes[str(self.id_ultima_compra)]["cantidad"] - self.dict_ordenes[str(self.id_ultima_compra)]["cantidad_cierre"]
             profit = cantidad_apertura*(porcentaje/100)
             
+            self.dict_ordenes[str(self.id)]["tipo"] = self.dict_ordenes[str(self.id)]["tipo"] + "/cierreTotal"
             self.dict_ordenes[str(self.id_ultima_compra)]["cantidad_cierre"] = self.dict_ordenes[str(self.id_ultima_compra)]["cantidad_cierre"] + cantidad_apertura
             self.dict_ordenes[str(self.id_ultima_compra)]["porcentaje"] = porcentaje
             self.dict_ordenes[str(self.id_ultima_compra)]["profit"] = self.dict_ordenes[str(self.id_ultima_compra)]["profit"] + profit
@@ -105,11 +106,14 @@ class Backtesting:
             cantidad_apertura = self.dict_ordenes[str(self.id_ultima_compra)]["cantidad"]
             profit = cantidad_apertura*(porcentaje/100) * pc_cierre
             
+            self.dict_ordenes[str(self.id)]["tipo"] = self.dict_ordenes[str(self.id)]["tipo"] + "/cierreParcial"
             self.dict_ordenes[str(self.id_ultima_compra)]["cantidad_cierre"] = self.dict_ordenes[str(self.id_ultima_compra)]["cantidad_cierre"] + cantidad_apertura*pc_cierre
             self.dict_ordenes[str(self.id_ultima_compra)]["porcentaje"] = porcentaje
             self.dict_ordenes[str(self.id_ultima_compra)]["profit"] = self.dict_ordenes[str(self.id_ultima_compra)]["profit"] + profit
             self.fondos = self.fondos + profit
             self.dict_ordenes[str(self.id_ultima_compra)]["fondos"] = self.fondos
+            
+            self.compra = self.compra + 1
         
         else: pass
 
@@ -131,6 +135,7 @@ class Backtesting:
             cantidad_apertura = self.dict_ordenes[str(self.id_ultima_venta)]["cantidad"] - self.dict_ordenes[str(self.id_ultima_venta)]["cantidad_cierre"]
             profit = cantidad_apertura*(porcentaje/100)
             
+            self.dict_ordenes[str(self.id)]["tipo"] = self.dict_ordenes[str(self.id)]["tipo"] + "/cierreTotal"
             self.dict_ordenes[str(self.id_ultima_venta)]["cantidad_cierre"] = self.dict_ordenes[str(self.id_ultima_venta)]["cantidad_cierre"] + cantidad_apertura
             self.dict_ordenes[str(self.id_ultima_venta)]["porcentaje"] = porcentaje
             self.dict_ordenes[str(self.id_ultima_venta)]["profit"] = self.dict_ordenes[str(self.id_ultima_venta)]["profit"] + profit
@@ -148,11 +153,14 @@ class Backtesting:
             cantidad_apertura = self.dict_ordenes[str(self.id_ultima_venta)]["cantidad"]
             profit = cantidad_apertura*(porcentaje/100) * pc_cierre
             
+            self.dict_ordenes[str(self.id)]["tipo"] = self.dict_ordenes[str(self.id)]["tipo"] + "/cierreParcial"
             self.dict_ordenes[str(self.id_ultima_venta)]["cantidad_cierre"] = self.dict_ordenes[str(self.id_ultima_venta)]["cantidad_cierre"] + cantidad_apertura*pc_cierre
             self.dict_ordenes[str(self.id_ultima_venta)]["porcentaje"] = porcentaje
             self.dict_ordenes[str(self.id_ultima_venta)]["profit"] = self.dict_ordenes[str(self.id_ultima_venta)]["profit"] + profit
             self.fondos = self.fondos + profit
             self.dict_ordenes[str(self.id_ultima_venta)]["fondos"] = self.fondos
+            
+            self.venta = self.venta + 1
         
         else:pass
           
