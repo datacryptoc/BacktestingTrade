@@ -7,6 +7,8 @@ Created on Thu Dec  8 16:59:05 2022
 import talib
 import numpy as np
 from backtesting import Backtesting, getData
+from sklearn.ensemble import RandomForestClassifier
+
 
 
 def getIndicators(df):
@@ -101,16 +103,23 @@ def getIndicators(df):
     return df[100:]
     
     
-data = getData(1000,"EURUSDT","1d")     
+data = getData(1500,"EURUSDT","1d")     
 df = getIndicators(data)
     
+df = df[["Open", "High", "Low", "Close", "ema_rapida", "ema_rapida_", "ema_media", "ema_media_",
+        "ema_lenta", "ema_lenta_", "volatilidad", "mecha_sup", "mecha_inf", "amplitud", "amplitud_", "amplitud123" ]]
+
+
+train = df[:-300]
+test = df[-300:]
+X_train = train.drop(["amplitud123"], axis=1)
+X_test = test.drop(["amplitud123"], axis=1)
+y_train = train["amplitud123"]
+y_test = test["amplitud123"]
     
     
-    
-    
-    
-    
-    
+clf = RandomForestClassifier()
+clf.fit(X_train, y_train)    
     
     
     
