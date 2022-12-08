@@ -11,114 +11,174 @@ class Backtesting:
         self.dict_ordenes = {}
         self.id_compra = 0
         self.id_venta = 0
-        self.id = 1
+        self.id = 0
         self.id_ultima_venta = 0
         self.id_ultima_compra = 0
         self.fondo_inicial = 1000
+        self.fondos = self.fondo_inicial
 
-    def buy(self, precio, cantidad):
+    #--- COMPRA     
+    def buy(self, date, precio, cantidad):
+        
         if self.compra == 1: #Si ya existe op de compra
             pass
         elif self.venta == 1: #Ya existe una venta
             pass
         elif self.compra == 0: #OPERACION DE COMPRA
+            self.id = self.id + 1    
             self.compra = 1
+            
             self.dict_ordenes[str(self.id)] = {}
-            self.dict_ordenes[str(self.id)]["id"] = self.id
+            self.dict_ordenes[str(self.id)]["fecha_apertura"] = date
             self.dict_ordenes[str(self.id)]["tipo"] = "compra"
             self.dict_ordenes[str(self.id)]["precio_apertura"] = precio
             self.dict_ordenes[str(self.id)]["cantidad"] = cantidad
+            self.dict_ordenes[str(self.id)]["fecha_cierre"] = ""
             self.dict_ordenes[str(self.id)]["precio_cierre"] = ""
-            self.dict_ordenes[str(self.id)]["profit"] = ""
+            self.dict_ordenes[str(self.id)]["cantidad_cierre"] = 0
+            self.dict_ordenes[str(self.id)]["profit"] = 0
             self.dict_ordenes[str(self.id)]["porcentaje"] = ""
-            self.dict_ordenes[str(self.id)]["fondos"] = self.fondo_inicial
-
+            self.dict_ordenes[str(self.id)]["fondos"] = self.fondos
             self.id_ultima_compra = self.id
+            #print(">>>> OP COMPRA FECHA: ", date, "; PRECIO: ", precio, "; CANT: ", cantidad)
             
-            print(">>>> OP COMPRA ID: ", self.id, "; PRECIO: ", precio, "; CANT: ", cantidad)
-            self.id = self.id + 1
-        else: print("WARNING: Hay mas de 1 op activa")
-        
+        else: pass
 
-    def sell(self, precio, cantidad):
+        
+    #--- VENTA
+    def sell(self, date, precio, cantidad):
         if self.venta == 1: #Si ya existe op de venta
             pass
         elif self.compra == 1: #Ya existe op de compra
             pass
         elif self.venta == 0: #OPERACION DE VENTA
+            self.id = self.id + 1
             self.venta = 1
+            
             self.dict_ordenes[str(self.id)] = {}
-            self.dict_ordenes[str(self.id)]["id"] = self.id
+            self.dict_ordenes[str(self.id)]["fecha_apertura"] = date
             self.dict_ordenes[str(self.id)]["tipo"] = "venta"
             self.dict_ordenes[str(self.id)]["precio_apertura"] = precio
             self.dict_ordenes[str(self.id)]["cantidad"] = cantidad
+            self.dict_ordenes[str(self.id)]["fecha_cierre"] = ""
             self.dict_ordenes[str(self.id)]["precio_cierre"] = ""
+            self.dict_ordenes[str(self.id)]["cantidad_cierre"] = 0
             self.dict_ordenes[str(self.id)]["porcentaje"] = ""
-            self.dict_ordenes[str(self.id)]["profit"] = ""
-            self.dict_ordenes[str(self.id)]["fondos"] = self.fondo_inicial
+            self.dict_ordenes[str(self.id)]["profit"] = 0
+            self.dict_ordenes[str(self.id)]["fondos"] = self.fondos
             self.id_ultima_venta = self.id
-
-            print("<<<< OP VENTA ID: ", self.id, "; PRECIO: ", precio, "; CANT: ", cantidad)
-            self.id = self.id + 1
-        else: print("WARNING: Hay mas de 1 op activa")
-
-    def sell_close(self, precio_cierre):
-        self.venta = 0
+            #print("<<<< OP VENTA FECHA: ", date, "; PRECIO: ", precio, "; CANT: ", cantidad)
+            
+        else: pass
+    
+   
+    #--- CIERRE COMPRA PARCIAL
+    def buy_close(self, date, precio_cierre, pc_cierre=1):
         
-        self.dict_ordenes[str(self.id_ultima_venta)]["precio_cierre"] = precio_cierre
-        precio_apertura = self.dict_ordenes[str(self.id_ultima_venta)]["precio_apertura"]
+        if self.compra == 0:
+            pass
         
-        self.dict_ordenes[str(self.id_ultima_venta)]["porcentaje"] = ((precio_apertura/precio_cierre)-1)*100
+        elif self.compra == 1 and pc_cierre == 1: #Se debe usar para terminar cierres parciales o cierre total único
 
-        porcentaje = self.dict_ordenes[str(self.id_ultima_venta)]["porcentaje"]
-        cantidad_apertura = self.dict_ordenes[str(self.id_ultima_venta)]["cantidad"]
-        self.dict_ordenes[str(self.id_ultima_venta)]["profit"] = cantidad_apertura*(porcentaje/100)
-        profit = self.dict_ordenes[str(self.id_ultima_venta)]["profit"]
-
-        self.fondo_inicial = self.fondo_inicial + profit
-        self.dict_ordenes[str(self.id_ultima_venta)]["fondos"] = self.fondo_inicial
-
-        print("---- Cierre venta ID: ", self.id_ultima_venta, "; PRECIO: ", precio_cierre, "; PROFIT: ", porcentaje, "%")
-
-    def buy_close(self, precio_cierre):
-        self.compra = 0
+            self.compra = 0            
+            self.dict_ordenes[str(self.id_ultima_compra)]["fecha_cierre"] = date
+            self.dict_ordenes[str(self.id_ultima_compra)]["precio_cierre"] = precio_cierre
+            
+            precio_apertura = self.dict_ordenes[str(self.id_ultima_compra)]["precio_apertura"]
+            porcentaje = ((precio_cierre/precio_apertura)-1)*100
+            cantidad_apertura = self.dict_ordenes[str(self.id_ultima_compra)]["cantidad"] - self.dict_ordenes[str(self.id_ultima_compra)]["cantidad_cierre"]
+            profit = cantidad_apertura*(porcentaje/100)
+            
+            self.dict_ordenes[str(self.id_ultima_compra)]["cantidad_cierre"] = self.dict_ordenes[str(self.id_ultima_compra)]["cantidad_cierre"] + cantidad_apertura
+            self.dict_ordenes[str(self.id_ultima_compra)]["porcentaje"] = porcentaje
+            self.dict_ordenes[str(self.id_ultima_compra)]["profit"] = self.dict_ordenes[str(self.id_ultima_compra)]["profit"] + profit
+            self.fondos = self.fondos + profit
+            self.dict_ordenes[str(self.id_ultima_compra)]["fondos"] = self.fondos
         
-        self.dict_ordenes[str(self.id_ultima_compra)]["precio_cierre"] = precio_cierre
-        precio_apertura = self.dict_ordenes[str(self.id_ultima_compra)]["precio_apertura"]
+        elif self.compra == 1 and pc_cierre != 1:
+            
+            self.dict_ordenes[str(self.id)]["fecha_cierre"] = date
+            self.dict_ordenes[str(self.id_ultima_compra)]["precio_cierre"] = precio_cierre
+            
+            precio_apertura = self.dict_ordenes[str(self.id_ultima_compra)]["precio_apertura"]
+            porcentaje = ((precio_cierre/precio_apertura)-1)*100
+            cantidad_apertura = self.dict_ordenes[str(self.id_ultima_compra)]["cantidad"]
+            profit = cantidad_apertura*(porcentaje/100) * pc_cierre
+            
+            self.dict_ordenes[str(self.id_ultima_compra)]["cantidad_cierre"] = self.dict_ordenes[str(self.id_ultima_compra)]["cantidad_cierre"] + cantidad_apertura*pc_cierre
+            self.dict_ordenes[str(self.id_ultima_compra)]["porcentaje"] = porcentaje
+            self.dict_ordenes[str(self.id_ultima_compra)]["profit"] = self.dict_ordenes[str(self.id_ultima_compra)]["profit"] + profit
+            self.fondos = self.fondos + profit
+            self.dict_ordenes[str(self.id_ultima_compra)]["fondos"] = self.fondos
         
-        self.dict_ordenes[str(self.id_ultima_compra)]["porcentaje"] = ((precio_cierre/precio_apertura)-1)*100
+        else: pass
 
-        porcentaje = self.dict_ordenes[str(self.id_ultima_compra)]["porcentaje"]
-        cantidad_apertura = self.dict_ordenes[str(self.id_ultima_compra)]["cantidad"]
-        self.dict_ordenes[str(self.id_ultima_compra)]["profit"] = cantidad_apertura*(porcentaje/100)
-        profit = self.dict_ordenes[str(self.id_ultima_compra)]["profit"]
 
-        self.fondo_inicial = self.fondo_inicial + profit
-        self.dict_ordenes[str(self.id_ultima_compra)]["fondos"] = self.fondo_inicial
+    #--- CIERRE VENTA PARCIAL
+    def sell_close(self, date, precio_cierre, pc_cierre=1):
         
-        print("---- Cierre compra ID: ", self.id_ultima_compra, "; PRECIO: ", precio_cierre, "; PROFIT: ", porcentaje, "%")
+        if self.venta == 0:
+            pass
         
+        elif self.venta == 1 and pc_cierre == 1: #Se debe usar para terminar cierres parciales o cierre total único
+          
+            self.venta = 0            
+            self.dict_ordenes[str(self.id_ultima_venta)]["fecha_cierre"] = date
+            self.dict_ordenes[str(self.id_ultima_venta)]["precio_cierre"] = precio_cierre
+            
+            precio_apertura = self.dict_ordenes[str(self.id_ultima_venta)]["precio_apertura"]    
+            porcentaje = ((precio_apertura/precio_cierre)-1)*100
+            cantidad_apertura = self.dict_ordenes[str(self.id_ultima_venta)]["cantidad"] - self.dict_ordenes[str(self.id_ultima_venta)]["cantidad_cierre"]
+            profit = cantidad_apertura*(porcentaje/100)
+            
+            self.dict_ordenes[str(self.id_ultima_venta)]["cantidad_cierre"] = self.dict_ordenes[str(self.id_ultima_venta)]["cantidad_cierre"] + cantidad_apertura
+            self.dict_ordenes[str(self.id_ultima_venta)]["porcentaje"] = porcentaje
+            self.dict_ordenes[str(self.id_ultima_venta)]["profit"] = self.dict_ordenes[str(self.id_ultima_venta)]["profit"] + profit
+            self.fondos = self.fondos + profit
+            self.dict_ordenes[str(self.id_ultima_venta)]["fondos"] = self.fondos
+            
+            
+        elif self.venta == 1 and pc_cierre != 1:
+          
+            self.dict_ordenes[str(self.id)]["fecha_cierre"] = date
+            self.dict_ordenes[str(self.id_ultima_venta)]["precio_cierre"] = precio_cierre
+  
+            precio_apertura = self.dict_ordenes[str(self.id_ultima_venta)]["precio_apertura"]    
+            porcentaje = ((precio_apertura/precio_cierre)-1)*100
+            cantidad_apertura = self.dict_ordenes[str(self.id_ultima_venta)]["cantidad"]
+            profit = cantidad_apertura*(porcentaje/100) * pc_cierre
+            
+            self.dict_ordenes[str(self.id_ultima_venta)]["cantidad_cierre"] = self.dict_ordenes[str(self.id_ultima_venta)]["cantidad_cierre"] + cantidad_apertura*pc_cierre
+            self.dict_ordenes[str(self.id_ultima_venta)]["porcentaje"] = porcentaje
+            self.dict_ordenes[str(self.id_ultima_venta)]["profit"] = self.dict_ordenes[str(self.id_ultima_venta)]["profit"] + profit
+            self.fondos = self.fondos + profit
+            self.dict_ordenes[str(self.id_ultima_venta)]["fondos"] = self.fondos
         
-    def plot_hist(self,df):        
+        else:pass
+          
+ 
+    #--- PLOT OPERACIONES
+    def plot_hist(self):    #df:dict_ordenes    
         import pandas as pd
         import seaborn as sns
         trade = []
         fondos = []
-        for i in range(1,len(self.dict_ordenes)):
+        dict_ordenes = self.dict_ordenes
+        for i in range(1,len(dict_ordenes)):
             
             i=str(i)
-            fondo = self.dict_ordenes[i]["fondos"]
+            fondo = dict_ordenes[i]["fondos"]
             fondos.append(fondo)
-            trade.append(i)
+            trade.append(dict_ordenes[i]["fecha_cierre"])
                       
         history = pd.DataFrame(list(zip(trade,fondos)), columns=["trade","fondo"])
-        sns.lineplot(history.trade, history.fondo)
+        sns.lineplot(history.trade, history.fondo) 
+        historico_trades = pd.DataFrame(dict_ordenes).transpose()
+        #print(historico_trades)
         
-        historico_trades = pd.DataFrame(self.dict_ordenes).transpose()
-        print(historico_trades)
-        
-        return historico_trades
-        
+        return historico_trades    
+    
+    
 #############################################################################################################
 #                                        FUNCIONES INDEPENDIENTES   
 #############################################################################################################
@@ -178,16 +238,63 @@ def getData(N,moneda,periodo):
     #OPEN/HIGH/LOW/CLOSE/VOLUME/RSITipo/RSIPendiente/Media1Pendiente/Media2Pendiente/Media3Pendiente/Target
             data = pd.DataFrame(data[:,1:6])
             data.columns = ["Open", "High", "Low", "Close", "Volume"]
-            data = data.round(2)
+            data = data.round(5)
     return data   
         
        
         
-       
+
         
-       
+'''
+    #--- CIERRE COMPRA TOTAL
+    def buy_close(self, date, precio_cierre):
         
-       
+        if self.compra == 0:
+            pass
+        
+        else:
+            self.compra = 0            
+            self.dict_ordenes[str(self.id)]["fecha_cierre"] = date
+            self.dict_ordenes[str(self.id_ultima_compra)]["precio_cierre"] = precio_cierre
+            
+            precio_apertura = self.dict_ordenes[str(self.id_ultima_compra)]["precio_apertura"]
+            porcentaje = ((precio_cierre/precio_apertura)-1)*100
+            cantidad_apertura = self.dict_ordenes[str(self.id_ultima_compra)]["cantidad"]
+            profit = cantidad_apertura*(porcentaje/100)
+            
+            self.dict_ordenes[str(self.id_ultima_compra)]["porcentaje"] = porcentaje
+            self.dict_ordenes[str(self.id_ultima_compra)]["profit"] = profit
+            self.fondos = self.fondos + profit
+            self.dict_ordenes[str(self.id_ultima_compra)]["fondos"] = self.fondos
+            
+            
+            print("---- Cierre compra FECHA: ", date, "; PRECIO: ", precio_cierre, "; PROFIT: ", porcentaje, "%")
+    
+
+    #--- CIERRE VENTA TOTAL
+    def sell_close(self, date, precio_cierre):
+        
+        if self.venta == 0:
+            pass
+        
+        else:
+            self.venta = 0            
+            self.dict_ordenes[str(self.id)]["fecha_cierre"] = date
+            self.dict_ordenes[str(self.id_ultima_venta)]["precio_cierre"] = precio_cierre
+            
+            precio_apertura = self.dict_ordenes[str(self.id_ultima_venta)]["precio_apertura"]    
+            porcentaje = ((precio_apertura/precio_cierre)-1)*100
+            cantidad_apertura = self.dict_ordenes[str(self.id_ultima_venta)]["cantidad"]
+            profit = cantidad_apertura*(porcentaje/100)
+            
+            self.dict_ordenes[str(self.id_ultima_venta)]["profit"] = profit
+            self.dict_ordenes[str(self.id_ultima_venta)]["porcentaje"] = porcentaje
+            self.fondos = self.fondos + profit
+            self.dict_ordenes[str(self.id_ultima_compra)]["fondos"] = self.fondos
+    
+            print("---- Cierre venta FECHA: ", date, "; PRECIO: ", precio_cierre, "; PROFIT: ", porcentaje, "%")
+'''
+ 
         
        
         
