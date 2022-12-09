@@ -8,6 +8,7 @@ import talib
 import numpy as np
 from backtesting import Backtesting, getData
 from sklearn.ensemble import RandomForestClassifier
+from sklearn import metrics
 
 
 
@@ -100,26 +101,45 @@ def getIndicators(df):
             df["amplitud123_"][i] = 1
         else: df["amplitud123_"][i] = -1
     
-    return df[100:]
+    return df[100:-4].astype("double")
     
     
-data = getData(1500,"EURUSDT","1d")     
+data = getData(1200,"EURUSDT","1d")     
 df = getIndicators(data)
     
-df = df[["Open", "High", "Low", "Close", "ema_rapida", "ema_rapida_", "ema_media", "ema_media_",
-        "ema_lenta", "ema_lenta_", "volatilidad", "mecha_sup", "mecha_inf", "amplitud", "amplitud_", "amplitud123" ]]
+df = df[["Open", "High", "Low", "Close", "mecha_sup", "mecha_inf", "amplitud", "amplitud123_", "amplitud12_"]]
 
 
 train = df[:-300]
 test = df[-300:]
-X_train = train.drop(["amplitud123"], axis=1)
-X_test = test.drop(["amplitud123"], axis=1)
-y_train = train["amplitud123"]
-y_test = test["amplitud123"]
-    
+X_train = train[["Open", "High", "Low", "Close", "mecha_sup", "mecha_inf", "amplitud"]]
+X_test = test[["Open", "High", "Low", "Close", "mecha_sup", "mecha_inf", "amplitud"]]
+y_train_a = train["amplitud123_"].astype("int")
+y_test_a = test["amplitud123_"].astype("int")
+y_train_b = train["amplitud12_"].astype("int")
+y_test_b = test["amplitud123_"].astype("int") 
     
 clf = RandomForestClassifier()
-clf.fit(X_train, y_train)    
+clf.fit(X_train, y_train_a)    
+y_pred_a = clf.predict(X_test)
+
+clf = RandomForestClassifier()
+clf.fit(X_train, y_train_b)    
+y_pred_b = clf.predict(X_test)
+
+y_ab = []
+for i in range(len(y_pred_a)):
+    if y_pred_a[i] == y_pred_b[i]:
+        y_ab.append(y_pred_a[i])
+    if y_pred_a[i] != y_pred_b[i]:
+        y_ab.append(0)
+
+
+print(metrics.confusion_matrix(y_test_a, y_pred_a))
+
+print(metrics.confusion_matrix(y_test_b, y_pred_b))
+
+print(metrics.confusion_matrix(y_pred_a, y_pred_b))
     
     
     
